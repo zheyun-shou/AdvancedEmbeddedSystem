@@ -83,7 +83,7 @@ int main()
             perror("pthread_create");
             exit(1);
         }
-        sleep(3);
+        sleep(1);
         Write_Hand_Angle(0x01,500,500,500,500,800,1000);
         write(fd,tUartData.m_send_array,tUartData.m_tx_len);
         sleep(1);
@@ -98,7 +98,6 @@ int main()
         sleep(1);
         Write_Hand_Angle(0x01,0,0,0,0,300,650);
         write(fd,tUartData.m_send_array,tUartData.m_tx_len);
-		sleep(3);
 	}
 	close(fd);
 	return 0;
