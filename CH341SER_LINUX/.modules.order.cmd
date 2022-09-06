@@ -1,0 +1,1 @@
+cmd_/home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/modules.order := {   echo /home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/ch34x.ko; :; } | awk '!x[$$0]++' - > /home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/modules.order

@@ -1,0 +1,1 @@
+cmd_/home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/Module.symvers := sed 's/\.ko$$/\.o/' /home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/modules.order | scripts/mod/modpost -m -a  -o /home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/Module.symvers -e -i Module.symvers   -T -

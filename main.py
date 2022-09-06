@@ -1,6 +1,11 @@
 # -*- coding:utf-8 -*-
 # author:金昕澳
 # Data: 2022/9/4
+
+# paper 1 rock 2 scissors 3
+
+
+import random
 from interval import Interval
 import socket
 import time
@@ -11,31 +16,32 @@ import datetime
 import numpy as np
 from tensorflow.keras.preprocessing import image
 from keras.models import load_model
+import shlex, subprocess
 import matplotlib.pyplot as plt
 
-def wait(target_time = ''):
+def wait(target_time:str):
     #target_time 是目标日期，str
     realnow = datetime.datetime.now()
     realnow_localtime = realnow.strftime('%H:%M:%S')
     realnow_time = Interval(realnow_localtime, realnow_localtime)
     time_interval = Interval(target_time, target_time)
     if realnow_time in time_interval:
-        return True
-    else:
         return False
+    else:
+        return True
 
-def make_targettime(nowtime , bias):
+def make_targettime(nowtime:datetime.datetime , bias:int) -> datetime.datetime :
     # nowtime是 datetime.datetime.now()的实例，bias是向后推移的时间，单位为s
     # bias 至多为60， 如果bias>60 应当反复执行make_targettime
     if nowtime.second + bias > 59:
-        nowtime = nowtime.replace(second =  nowtime.second + bias - 60)
+        nowtime = nowtime.replace(second=nowtime.second + bias - 60)
         if nowtime.minute == 59:# 表示现在是59分xx秒 + bias 秒后， 分钟进位，且小时也要进位
-            nowtime = nowtime.replace(minute = 0)
-            nowtime = nowtime.replace(hour = nowtime.hour + 1)
+            nowtime = nowtime.replace(minute=0)
+            nowtime = nowtime.replace(hour=nowtime.hour + 1)
         else:
-            nowtime.minute = nowtime.minute + 1
+            nowtime = nowtime.replace(minute=nowtime.minute + 1)
     else:
-        nowtime = nowtime.replace(second = nowtime.second + 1)
+        nowtime = nowtime.replace(second = nowtime.second + bias)
 
     return nowtime
 
@@ -60,7 +66,6 @@ def socket_service_image():
     # sock, addr = tcpserver.accept()
     # deal_image(sock, addr)
     return path
-
 
 
 def deal_image(sock: object, addr: object) -> object:
@@ -96,9 +101,53 @@ def deal_image(sock: object, addr: object) -> object:
         break
     return path
 
+def judge(people:int, robot:int) -> int:
+    # 返回 1 表示people wins, 返回 -1 表示robot wins，返回 0 表示平局
+    # paper 1 rock 2 scissors 3
+    if people == 1:
+        if robot == 1:
+            return 0
+        elif robot == 2:
+            return 1
+        else:
+            return -1
+    elif people == 2:
+        if robot == 1:
+            return -1
+        elif robot == 2:
+            return 0
+        else:
+            return 1
+    else:
+        if robot == 1:
+            return -1
+        elif robot == 2:
+            return 1
+        else:
+            return 0
+
+
+def classification(path) -> int :
+    # 对读到的图片进行处理
+    img = image.load_img(path, target_size=(150, 150))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    images = np.vstack([x])
+    classes = model.predict(images, batch_size=10)
+    if classes[0][0] == 1.0:
+        return 1
+        print('You gave paper!')
+    elif classes[0][1] == 1.0:
+        return 2
+        print('You gave rock!')
+    else:
+        return 3
+        print('You gave scissors!')
 
 #程序开始运行啦
 #确定石头剪刀布开始时间为按下2min内
+
+#确定主程序开始运行时间
 now_ori = datetime.datetime.now()
 nextmin = copy.deepcopy(now_ori)
 # 防止分钟数越界
@@ -109,42 +158,87 @@ else:
     nextmin = nextmin.replace(minute=now_ori.minute+2)
 nextmin = nextmin.replace(second=0)
 nextmin = nextmin.replace(microsecond=0)
-now_localtime = nextmin.strftime('%H:%M:%S')
+next_localtime = nextmin.strftime('%H:%M:%S')
+#确定主程序开始运行时间
+
 
 #确定tcp通信的ip socket
 host = "192.168.43.111"
 port = 6666
 tcpserver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpserver.bind((host, port))
+#确定tcp通信的ip socket
 # 导入训练好的模型
 model_dir = 'rps.h5'
 model = load_model(model_dir)
 model.summary()
+# 导入训练好的模型
+# 初始化比赛结果
+wins = 0
+loses = 0
+even = 0
+# 初始化比赛结果
+
 #以上过程应当在1min内完成。这样，程序会在按下运行键后最接近
 
-flag = True
+start_time = copy.deepcopy(nextmin)
+strstart_time = start_time.strftime('%H:%M:%S')
+print(strstart_time)
+i = 0
 
-while flag:
-        flag = wait(next_localtime)
+while (abs(wins - loses) < 2) and (i<=20) :
+    i = i + 1
+    flag = True
+    while flag:
+        flag = wait(strstart_time)
 
-#控制灵巧手运动过程
-cmd = 'sudo ./api'
-os.system(cmd)
-#读取图片并返回图片路径
-path = socket_service_image()
-# print("path of the picture is")
-# print(path)
-#对读到的图片进行处理
-img = image.load_img(path, target_size=(150, 150))
-x = image.img_to_array(img)
-x = np.expand_dims(x, axis=0)
-images = np.vstack([x])
-classes = model.predict(images, batch_size=10)
-#paper-rock-scissors
-#print(classes)
-if classes[0][0] == 1.0:
-    print('You gave paper!')
-elif classes[0][1] == 1.0:
-    print('You gave rock!')
+    rand_robot = random.randint(1,3)
+
+    #控制灵巧手运动过程
+    # paper 1 rock 2 scissors 3
+    if rand_robot == 1:
+        command_line = 'sudo ./paper'
+    elif rand_robot == 2:
+        command_line = 'sudo ./rock'
+    else:
+        command_line = 'sudo ./scissors'
+    args = shlex.split(command_line)
+    print(args)
+    p = subprocess.Popen(args)
+    #Popen.kill() #杀死进程，先不杀
+    #控制灵巧手运动过程
+
+    #读取图片并返回图片路径
+    target_time = make_targettime(start_time, 7)
+    target_localtime = target_time.strftime('%H:%M:%S')
+    flag = True
+    while flag:
+        flag = wait(target_localtime)
+    path = socket_service_image()
+    #读取图片并返回图片路径
+
+    #判断胜负
+    recognize_result = classification(path)
+    term_result = judge(recognize_result,rand_robot)
+    if term_result == 1:
+        wins = wins + 1
+        print("In this term, you win!")
+    elif term_result == 0:
+        even = even + 1
+        print("In this term, you got even.")
+    else:
+        loses = loses + 1
+        print("Oh, in this term, you lose.")
+    start_time = make_targettime(start_time, 10)
+    strstart_time = start_time.strftime('%H:%M:%S')
+
+if abs(wins -loses) >= 2:
+    if wins > loses:
+        print("Congratulations, you win!")
+    else:
+        print("It's a pity that you lost.")
 else:
-    print('You gave scissors!')
+    print("The game has lasted for too long.EXIT!")
+
+
+print("The final result is you won {} time(s), got even {} times and lost {} times".format(wins, even, loses))

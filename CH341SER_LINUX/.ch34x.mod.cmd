@@ -1,0 +1,1 @@
+cmd_/home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/ch34x.mod := { echo  /home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/ch34x.o;  echo; } > /home/peterking/PycharmProjects/AdvancedEmbeddedSystem/CH341SER_LINUX/ch34x.mod
