@@ -19,6 +19,12 @@ from keras.models import load_model
 import shlex, subprocess
 import matplotlib.pyplot as plt
 
+
+
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
 def wait(target_time:str):
     #target_time 是目标日期，str
     realnow = datetime.datetime.now()
@@ -69,7 +75,7 @@ def socket_service_image():
 
 
 def deal_image(sock: object, addr: object) -> object:
-    print("Accept connection from {0}".format(addr))  # 查看发送端的ip和端口
+    #print("Accept connection from {0}".format(addr))  # 查看发送端的ip和端口
     print("-" * 5 + "开始接收" + "-" * 5)
 
     while True:
@@ -81,7 +87,7 @@ def deal_image(sock: object, addr: object) -> object:
             recvd_size = 0
 
             now_time = time.strftime("%Y%m%d-%H%M%S")
-            print(f"保存为：./{ now_time} {fn}")
+            # print(f"保存为：./{ now_time} {fn}")
             fp = open(r"./" + now_time + " " + fn, 'wb')
 
             while not recvd_size == filesize:
@@ -96,34 +102,62 @@ def deal_image(sock: object, addr: object) -> object:
         print("-"*5 + "接收完成" + "-"*5)
         sock.close()
         path = "./" + now_time + " " + fn
-        print(path)
-        print(type(path))
+        #print(path)
+        #print(type(path))
         break
     return path
 
 def judge(people:int, robot:int) -> int:
     # 返回 1 表示people wins, 返回 -1 表示robot wins，返回 0 表示平局
     # paper 1 rock 2 scissors 3
+
     if people == 1:
         if robot == 1:
+            command_lin = 'python3 ptop.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return 0
         elif robot == 2:
+            command_lin = 'python3 ptor.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return 1
         else:
+            command_lin = 'python3 ptos.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return -1
     elif people == 2:
         if robot == 1:
+            command_lin = 'python3 rtop.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return -1
         elif robot == 2:
+            command_lin = 'python3 rtor.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return 0
         else:
+            command_lin = 'python3 rtos.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return 1
     else:
         if robot == 1:
-            return -1
-        elif robot == 2:
+            command_lin = 'python3 stop.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return 1
+        elif robot == 2:
+            command_lin = 'python3 stor.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
+            return -1
         else:
+            command_lin = 'python3 stos.py'
+            arg = shlex.split(command_lin)
+            q = subprocess.Popen(arg)
             return 0
 
 
@@ -135,14 +169,14 @@ def classification(path) -> int :
     images = np.vstack([x])
     classes = model.predict(images, batch_size=10)
     if classes[0][0] == 1.0:
-        return 1
         print('You gave paper!')
+        return 1
     elif classes[0][1] == 1.0:
-        return 2
         print('You gave rock!')
+        return 2
     else:
-        return 3
         print('You gave scissors!')
+        return 3
 
 #程序开始运行啦
 #确定石头剪刀布开始时间为按下2min内
@@ -161,6 +195,15 @@ nextmin = nextmin.replace(microsecond=0)
 next_localtime = nextmin.strftime('%H:%M:%S')
 #确定主程序开始运行时间
 
+audio_starttime = copy.deepcopy(now_ori)
+if now_ori.minute + 1 > 59:
+    audio_starttime = audio_starttime.replace(minute=now_ori.minute + 1 - 60)
+    audio_starttime = audio_starttime.replace(minute=now_ori.hour + 1)
+else:
+    audio_starttime = audio_starttime.replace(minute=now_ori.minute + 1)
+audio_starttime = audio_starttime.replace(second=56)
+audio_starttime = audio_starttime.replace(microsecond=0)
+audio_localstarttime = audio_starttime.strftime('%H:%M:%S')
 
 #确定tcp通信的ip socket
 host = "192.168.43.111"
@@ -181,10 +224,21 @@ even = 0
 
 #以上过程应当在1min内完成。这样，程序会在按下运行键后最接近
 
+
+
 start_time = copy.deepcopy(nextmin)
 strstart_time = start_time.strftime('%H:%M:%S')
 print(strstart_time)
 i = 0
+
+flag = True
+while flag:
+    flag = wait(audio_localstarttime)
+
+command_line = 'python3 gamestart.py'
+args = shlex.split(command_line)
+print(args)
+p = subprocess.Popen(args)
 
 while (abs(wins - loses) < 2) and (i<=20) :
     i = i + 1
@@ -193,6 +247,10 @@ while (abs(wins - loses) < 2) and (i<=20) :
         flag = wait(strstart_time)
 
     rand_robot = random.randint(1,3)
+
+    command_line2 = 'python3 psr.py'
+    ar = shlex.split(command_line2)
+    t = subprocess.Popen(ar)
 
     #控制灵巧手运动过程
     # paper 1 rock 2 scissors 3
@@ -207,6 +265,13 @@ while (abs(wins - loses) < 2) and (i<=20) :
     p = subprocess.Popen(args)
     #Popen.kill() #杀死进程，先不杀
     #控制灵巧手运动过程
+
+    if rand_robot == 1:
+        print("Rotot gave paper.")
+    elif rand_robot == 2:
+        print("Rotot gave rock.")
+    else:
+        print("Rotot gave scissors.")
 
     #读取图片并返回图片路径
     target_time = make_targettime(start_time, 7)
@@ -234,10 +299,22 @@ while (abs(wins - loses) < 2) and (i<=20) :
 
 if abs(wins -loses) >= 2:
     if wins > loses:
+        command_line = 'python3 win.py'
+        args = shlex.split(command_line)
+        print(args)
+        p = subprocess.Popen(args)
         print("Congratulations, you win!")
     else:
+        command_line = 'python3 lose.py'
+        args = shlex.split(command_line)
+        print(args)
+        p = subprocess.Popen(args)
         print("It's a pity that you lost.")
 else:
+    command_line = 'python3 timetoolong.py'
+    args = shlex.split(command_line)
+    print(args)
+    p = subprocess.Popen(args)
     print("The game has lasted for too long.EXIT!")
 
 
